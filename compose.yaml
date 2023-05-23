@@ -1,0 +1,65 @@
+version: '3'
+services:
+  node1:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    ports:
+      - 8000:8000
+    volumes:
+      - node1-data:/app/data
+    networks:
+      - blockchain-network
+
+  node2:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    ports:
+      - 8001:8000
+    volumes:
+      - node2-data:/app/data
+    networks:
+      - blockchain-network
+
+  node3:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    ports:
+      - 8002:8000
+    volumes:
+      - node3-data:/app/data
+    networks:
+      - blockchain-network
+
+  node4:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    ports:
+      - 8003:8000
+    volumes:
+      - node4-data:/app/data
+    networks:
+      - blockchain-network
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    ports:
+      - 8080:8080
+    environment:
+      BLOCKCHAIN_NODE: "node1:8000"
+    networks:
+      - blockchain-network
+
+networks:
+  blockchain-network:
+
+volumes:
+  node1-data:
+  node2-data:
+  node3-data:
+  node4-data:

@@ -1,0 +1,14 @@
+{{ define "base" }}
+<html>
+  <head>
+    <title>{{ .Title }}</title>
+  </head>
+  <body>
+    <div><a href="/index">Home</a></div>
+    <center><h1>{{ .Title }}</h1></center>
+    <hr>
+    {{ template "index" . }}
+  </body>
+</html>
+{{ end }}
+
