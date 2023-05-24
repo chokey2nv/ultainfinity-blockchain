@@ -7,7 +7,7 @@ A simplest blockchain implementation using go language
 Clone the project,
 
 ```sh
-$ git clone git@github.com:chokey2nv/ultainfinity-blockchain.git
+$ git clone https://github.com/chokey2nv/ultainfinity-blockchain.git
 ```
 
 Install the dependencies,
