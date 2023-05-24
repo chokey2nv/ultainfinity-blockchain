@@ -24,7 +24,7 @@
 	      <div class="post_box-options"><button class="option-btn">Reply</button></div>
 	      <div style="background: rgb(0, 97, 146) none repeat scroll 0% 0%; box-shadow: rgb(0, 97, 146) 0px 0px 0px 2px;" class="post_box-avatar">{{$post.Author}}</div>
 	      <div class="name-header">{{$post.Author}}</div>
-	      <div class="post_box-subtitle"> Posted at <i>{{ $post.Timestamp}}</i></div>
+	      <div class="post_box-subtitle"> Posted at <i>{{ReadableTime $post.Timestamp}}</i></div>
 	   </div>
 	   <div>
 	      <div class="post_box-body">

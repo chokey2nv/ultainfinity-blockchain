@@ -103,6 +103,7 @@ func ParseTransactions(transactionsData []interface{}) []Transaction {
 	return transactions
 }
 
+// create genesis block
 func (bc *Blockchain) CreateGenesisBlock() error {
 	genesisBlock := Block{
 		Index:        0,
@@ -120,14 +121,25 @@ func (bc *Blockchain) CreateGenesisBlock() error {
 	return nil
 }
 
+// get last block in the chain
 func (bc *Blockchain) GetLastBlock() Block {
 	return bc.Chain[len(bc.Chain)-1]
 }
 
+/**
+A function that adds the block to the chain after verification.
+Verification includes:
+* Checking if the proof is valid.
+* The previous_hash referred in the block and the hash of latest block
+	in the chain match.
+*/
 func (bc *Blockchain) AddBlock(block Block) error {
+
+	//compare the previous hash
 	if bc.GetLastBlock().Hash != block.PreviousHash {
 		return fmt.Errorf("previous hash incorrect")
 	}
+	//
 	if !bc.IsValidProof(block, block.Hash) {
 		return fmt.Errorf("block proof invalid")
 	}
@@ -135,6 +147,11 @@ func (bc *Blockchain) AddBlock(block Block) error {
 	return nil
 }
 
+/**
+This function adds the pending transactions to the blockchain
+by adding them to the block
+and figuring out Proof Of Work.
+*/
 func (bc *Blockchain) MineBlock() (bool, error) {
 	if len(bc.UnconfirmedTransactions) == 0 {
 		return false, nil
@@ -162,7 +179,10 @@ func (bc *Blockchain) AddNewTransaction(transaction *Transaction) {
 	bc.UnconfirmedTransactions = append(bc.UnconfirmedTransactions, *transaction)
 }
 
-// ProofOfWork performs the proof of work algorithm to find a hash that satisfies the difficulty criteria.
+/**
+ProofOfWork performs the proof of work algorithm to find a hash
+that satisfies the difficulty criteria.
+*/
 func (bc *Blockchain) ProofOfWork(block *Block) error {
 	var (
 		computedHash string
@@ -183,6 +203,12 @@ func (bc *Blockchain) ProofOfWork(block *Block) error {
 	block.Hash = computedHash
 	return nil
 }
+
+/**
+A function to announce to the network once a block has been mined.
+    Other blocks can simply verify the proof of work and add it to their
+    respective chains.
+*/
 func (bc *Blockchain) AnnounceNewBlock() {
 	for _, peer := range bc.Peers {
 		url := peer.NodeAddress + "/add_block"
@@ -201,6 +227,9 @@ func (bc *Blockchain) AnnounceNewBlock() {
 		defer resp.Body.Close()
 	}
 }
+
+// perform consensus - If a longer valid chain is
+//found, our chain is replaced with it.
 func (bc *Blockchain) Consensus() bool {
 	currentLen := int64(len(bc.Chain))
 	var (

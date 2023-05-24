@@ -22,6 +22,7 @@ type Transaction struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
+//A function that return the hash of the block contents.
 func (bk *Block) ComputeHash() (string, error) {
 	bytes, err := json.Marshal(bk)
 	if err != nil {

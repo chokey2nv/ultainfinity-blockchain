@@ -46,11 +46,14 @@ func NewApplication() (*Application, error) {
 	app := &Application{
 		Router: chi.NewRouter(),
 	}
+	//check env variable BLOCKCHAIN_NODE for address of the communicating node
+	//use default if not found
 	if os.Getenv("BLOCKCHAIN_NODE") != "" {
 		app.node = "http://" + os.Getenv("BLOCKCHAIN_NODE")
 	} else {
 		app.node = ConnectedNodeAddress
 	}
+	//set up api routes
 	app.SetupRoutes()
 	return app, nil
 }
@@ -70,7 +73,8 @@ func (app *Application) FetchPosts(posts *[]Post) {
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode == http.StatusOK {
+	//check request is successful and get response data and pass to posts ref.
+	if response != nil && response.StatusCode == http.StatusOK {
 		var chain struct {
 			Chain []struct {
 				Index        int           `json:"index"`
@@ -104,33 +108,39 @@ func (app *Application) FetchPosts(posts *[]Post) {
 	}
 }
 
+// Endpoing: Index Request handler to respond with html file
 func (app *Application) IndexHandler(w http.ResponseWriter, r *http.Request) {
+	//fetch posts from node
 	app.FetchPosts(&posts)
-	tmpl, err := template.ParseFiles("client/app/templates/index.html", "client/app/templates/base.html")
+	//prepare template for forwarding
+	tmpl, err := template.New("index.html").Funcs(template.FuncMap{
+		"ReadableTime": app.TimestampToString,
+	}).ParseFiles(
+		"client/app/templates/index.html",
+		"client/app/templates/base.html",
+	)
 	if err != nil {
 		log.Println(err)
 	}
-	// Register the "node_address" function with the template
-	tmpl.Funcs(template.FuncMap{
-		"ReadableTime": func(time int64) string {
-			return app.TimestampToString(time)
-		},
-	})
 	viewData := ViewData{
 		Title:       "YourNet: Decentralized content sharing",
 		Posts:       posts,
 		NodeAddress: ConnectedNodeAddress,
 		Host:        r.Host,
 	}
-
-	tmpl.Execute(w, viewData)
+	//write template and send with passed in values (struct) and functions
+	if err := tmpl.Execute(w, viewData); err != nil {
+		log.Println(err)
+	}
 }
 
 // Endpoint to create a new transaction via our application.
 func (app *Application) SubmitTextareaHandler(w http.ResponseWriter, r *http.Request) {
+	//collect form body
 	postContent := r.FormValue("content")
 	author := r.FormValue("author")
 
+	//form struct with the form values
 	postObject := struct {
 		Author  string `json:"author"`
 		Content string `json:"content"`
@@ -139,19 +149,23 @@ func (app *Application) SubmitTextareaHandler(w http.ResponseWriter, r *http.Req
 		Content: postContent,
 	}
 
+	//define node public address and path (method)
 	newTxAddress := app.node + "/new_transaction"
 	payload, err := json.Marshal(postObject)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	//post new transaction to node and redirect to home page
 	_, err = http.Post(newTxAddress, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	//redirect to home page
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
+//Time stamp to readable string (like - just now, yesterday etc)
 func (app *Application) TimestampToString(stamp int64) string {
 	timestamp := time.Unix(stamp, 0)
 	currentTime := time.Now()

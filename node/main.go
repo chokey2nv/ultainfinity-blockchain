@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -19,21 +20,30 @@ var (
 	err         error
 )
 
-func StartServer() {
+/**
+Start server starts blockchain (node) server,
+and gracefully shutdown when interrupted
+* it starts server from saved file (if any),
+and before shutdown saves blockchain data to file (blockchain.json)
+*/
+func StartServer(port int64) {
+	if port == 0 {
+		port = 8000
+	}
 	application, err = app.NewApplication()
 	if err != nil {
 		log.Fatalf("new application: %v", err)
 	}
 
 	server = &http.Server{
-		Addr:         ":8000",
+		Addr:         ":" + strconv.FormatInt(port, 10),
 		Handler:      application.Router,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
 	go func() {
-		log.Println("Starting server (node) on port 8000")
+		log.Println("Starting server (node) on " + server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatal("Server error:", err)
 		}
@@ -60,7 +70,9 @@ func StartServer() {
 	log.Println("Server (node) gracefully stopped")
 }
 
-func StopServer() {	
+//s tops server when running multiple nodes or started together with client server
+// in a single command
+func StopServer() {
 	log.Println("Shutting down server...")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -68,7 +80,7 @@ func StopServer() {
 	if err := application.SaveApplication(); err != nil {
 		log.Fatal("save application:", err)
 	}
-	
+
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatal("Server shutdown error:", err)
 	}

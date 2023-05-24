@@ -15,9 +15,9 @@ import (
 var (
 	server *http.Server
 )
-
+//Function to start client server
 func StartServer() {
-	application, err := app.NewApplication()
+	application, err := app.NewApplication() //create new application
 	if err != nil {
 		panic(err)
 	}
@@ -51,6 +51,7 @@ func StartServer() {
 	log.Println("Server (client) gracefully stopped")
 }
 
+//Function to stop server, used while running multiple node or concurrently with node server in a single command
 func StopServer() {
 	log.Println("Shutting down server...")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

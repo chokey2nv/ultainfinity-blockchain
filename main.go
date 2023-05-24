@@ -11,21 +11,25 @@ import (
 	"github.com/urfave/cli"
 )
 
-// Block represents a block in the blockchain.
-
 func main() {
+	// Create a channel to receive termination signals
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
-	// Create a channel to receive termination signals
+	// cli app to separate applications or start both at same time, 
+	//with flags to change port
 	app := &cli.App{
 		UseShortOptionHandling: true,
 		Commands: []cli.Command{
 			{
 				Name:  "node",
 				Usage: "start blockchain server",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "port", Usage: "set node port"},
+				},
 				Action: func(cCtx *cli.Context) error {
-					node.StartServer()
+					port := cCtx.Int64("port")
+					node.StartServer(port)
 					return nil
 				},
 			},
@@ -40,9 +44,13 @@ func main() {
 			{
 				Name:  "all",
 				Usage: "start node & client servers",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "node-port", Usage: "set node port"},
+				},
 				Action: func(cCtx *cli.Context) error {
+					port := cCtx.Int64("node-port")
 					go client.StartServer()
-					go node.StartServer()
+					go node.StartServer(port)
 					// Wait for termination signal
 					<-signalCh
 
